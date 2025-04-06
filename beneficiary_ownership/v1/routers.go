@@ -8,6 +8,7 @@ import (
 	"lexicon/bo-api/common/utils"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -139,7 +140,13 @@ func chatbotHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	chatReq, err := http.NewRequestWithContext(r.Context(), "POST", "https://7627-103-121-108-197.ngrok-free.app/chatbot/user_message", nil)
+	// Use ChatbotBaseURL from env variable
+	chatbotBaseURL := os.Getenv("CHATBOT_BASE_URL")
+	if chatbotBaseURL == "" {
+		chatbotBaseURL = ""
+	}
+
+	chatReq, err := http.NewRequestWithContext(r.Context(), "POST", chatbotBaseURL+"/chatbot/user_message", nil)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating request")
 		utils.WriteError(w, http.StatusNotFound, errors.New("data not found"))

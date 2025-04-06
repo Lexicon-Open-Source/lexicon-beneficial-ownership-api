@@ -88,10 +88,11 @@ func (l *listenConfig) loadFromEnv() {
 }
 
 type config struct {
-	Listen        listenConfig `json:"listen"`
-	PgSql         pgSqlConfig  `json:"pgsql"`
-	BackendApiKey string       `json:"api_key"`
-	ServerSalt    string       `json:"salt"`
+	Listen         listenConfig `json:"listen"`
+	PgSql          pgSqlConfig  `json:"pgsql"`
+	BackendApiKey  string       `json:"api_key"`
+	ServerSalt     string       `json:"salt"`
+	ChatbotBaseURL string       `json:"chatbot_base_url"`
 }
 
 func (c *config) loadFromEnv() {
@@ -99,13 +100,15 @@ func (c *config) loadFromEnv() {
 	c.PgSql.loadFromEnv()
 	loadEnvString("API_KEY", &c.BackendApiKey)
 	loadEnvString("SALT", &c.ServerSalt)
+	loadEnvString("CHATBOT_BASE_URL", &c.ChatbotBaseURL)
 }
 
 func defaultConfig() config {
 	return config{
-		Listen:        defaultListenConfig(),
-		PgSql:         defaultPgSql(),
-		BackendApiKey: "", // TODO: Default value ​​need to be defined
-		ServerSalt:    "", // TODO: Default value ​​need to be defined
+		Listen:         defaultListenConfig(),
+		PgSql:          defaultPgSql(),
+		BackendApiKey:  "", // TODO: Default value ​​need to be defined
+		ServerSalt:     "", // TODO: Default value ​​need to be defined
+		ChatbotBaseURL: "",
 	}
 }
