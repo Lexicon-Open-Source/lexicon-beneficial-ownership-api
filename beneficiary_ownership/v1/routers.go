@@ -147,6 +147,7 @@ func chatbotHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chatReq, err := http.NewRequestWithContext(r.Context(), "POST", chatbotBaseURL+"/chatbot/user_message", nil)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating request")
 		utils.WriteError(w, http.StatusNotFound, errors.New("data not found"))
