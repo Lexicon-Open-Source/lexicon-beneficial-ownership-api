@@ -146,6 +146,9 @@ func chatbotHandler(w http.ResponseWriter, r *http.Request) {
 		chatbotBaseURL = ""
 	}
 
+	// Get API key from environment variable
+	apiKey := os.Getenv("CHATBOT_API_KEY")
+
 	chatReq, err := http.NewRequestWithContext(r.Context(), "POST", chatbotBaseURL+"/chatbot/user_message", nil)
 
 	if err != nil {
@@ -156,6 +159,7 @@ func chatbotHandler(w http.ResponseWriter, r *http.Request) {
 
 	chatReq.Header.Set("Accept", "application/json")
 	chatReq.Header.Set("Content-Type", "application/json")
+	chatReq.Header.Set("X-API-KEY", apiKey)
 
 	params := url.Values{}
 	params.Add("thread_id", req.ThreadID)
@@ -192,6 +196,13 @@ func chatbotReferenceHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, errors.New("body is empty"))
 		return
 	}
+
+	// Get API key from environment variable
+	apiKey := os.Getenv("CHATBOT_API_KEY")
+	if apiKey != "" {
+		w.Header().Set("X-API-KEY", apiKey)
+	}
+
 	urls, err := bo_v1_services.GetUrlByCaseNumber(r.Context(), req.CaseNumbers)
 	if err != nil {
 		log.Error().Err(err).Msg("Error getting urls")
