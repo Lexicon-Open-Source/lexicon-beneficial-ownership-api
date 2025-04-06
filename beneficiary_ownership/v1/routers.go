@@ -3,6 +3,7 @@ package bo_v1
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	models "lexicon/bo-api/beneficiary_ownership/v1/models"
 	bo_v1_services "lexicon/bo-api/beneficiary_ownership/v1/services"
 	"lexicon/bo-api/common/utils"
@@ -167,6 +168,11 @@ func chatbotHandler(w http.ResponseWriter, r *http.Request) {
 
 	chatReq.URL.RawQuery = params.Encode()
 
+	// Log the request as curl command for debugging
+	curlCmd := fmt.Sprintf("curl -X POST '%s' -H 'Accept: application/json' -H 'Content-Type: application/json' -H 'X-API-KEY: %s'",
+		chatReq.URL.String(), apiKey)
+	log.Info().Msgf("Chatbot curl equivalent: %s", curlCmd)
+
 	log.Info().Msgf("Chatbot request: %s", chatReq.URL.String())
 	chatResp, err := utils.Client.Do(chatReq)
 	if err != nil {
@@ -202,6 +208,12 @@ func chatbotReferenceHandler(w http.ResponseWriter, r *http.Request) {
 	if apiKey != "" {
 		w.Header().Set("X-API-KEY", apiKey)
 	}
+
+	// Log the API call for debugging
+	reqBody, _ := json.Marshal(req)
+	curlCmd := fmt.Sprintf("curl -X POST '%s/chatbot/references' -H 'Content-Type: application/json' -H 'X-API-KEY: %s' -d '%s'",
+		os.Getenv("CHATBOT_BASE_URL"), apiKey, string(reqBody))
+	log.Info().Msgf("Chatbot references curl equivalent: %s", curlCmd)
 
 	urls, err := bo_v1_services.GetUrlByCaseNumber(r.Context(), req.CaseNumbers)
 	if err != nil {
