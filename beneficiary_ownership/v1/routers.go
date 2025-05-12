@@ -23,6 +23,7 @@ func Router() *chi.Mux {
 	r.Get("/search", searchHandler)
 	r.Get("/detail/{id}", detailHandler)
 	r.Get("/chart", chartHandler)
+	r.Get("/lkpp-chart", lkppCharthandler)
 	r.Post("/chatbot", chatbotHandler)
 	r.Post("/chatbot/references", chatbotReferenceHandler)
 	return r
@@ -123,6 +124,16 @@ func detailHandler(w http.ResponseWriter, r *http.Request) {
 
 func chartHandler(w http.ResponseWriter, r *http.Request) {
 	response, err := bo_v1_services.GetChartData(r.Context())
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("data not found"))
+		return
+	}
+
+	utils.WriteData(w, response, http.StatusOK)
+}
+
+func lkppCharthandler(w http.ResponseWriter, r *http.Request) {
+	response, err := bo_v1_services.GetLkppChartData(r.Context())
 	if err != nil {
 		utils.WriteError(w, http.StatusNotFound, errors.New("data not found"))
 		return
