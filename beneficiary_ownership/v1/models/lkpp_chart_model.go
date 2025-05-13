@@ -7,13 +7,20 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+	// "gopkg.in/guregu/null.v4"
 )
 
+// type common_models.BaseChartModel struct {
+// 	Name  null.String `json:"name"`
+// 	Value float64     `json:"value"`
+// }
+
 type LkppChartsModel struct {
-	BlacklistProvince    []common_models.BaseChartModel `json:"blacklist_province"`
-	CeilingDistribution  []common_models.BaseChartModel `json:"ceiling_distribution"`
-	TopTenReporter       []common_models.BaseChartModel `json:"top_ten_reporter"`
-	ScenarioDistribution []common_models.BaseChartModel `json:"scenario_distribution"`
+	BlacklistProvinces    []common_models.BaseChartModel           `json:"blacklist_province"`
+	CeilingDistribution   []common_models.BaseChartModel           `json:"ceiling_distribution"`
+	TopTenReporters       []common_models.BaseChartModel           `json:"top_ten_reporter"`
+	ScenarioDistribution  []common_models.BaseChartModelFloatValue `json:"scenario_distribution"`
+	ViolationDistribution []common_models.BaseChartModelFloatValue `json:"violation_distribution"`
 }
 
 var emptyLkppChartModel LkppChartsModel
@@ -23,7 +30,7 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 	var lkppChartsResult LkppChartsModel
 
 	// Get Blacklist by Province Chart Data
-	blacklistProvinceQuery := `
+	blacklistProvincesQuery := `
 		SELECT
 			c.extra_data -> 0 -> 'data' ->> 'province' dimension,
 			count(c.extra_data -> 0 -> 'data' ->> 'province') total
@@ -38,14 +45,14 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 		ORDER BY 
 			2 desc;
 	`
-	log.Info().Msg("Executing query: " + blacklistProvinceQuery)
+	log.Info().Msg("Executing query: " + blacklistProvincesQuery)
 
-	blacklistProvinces, err := tx.Query(ctx, blacklistProvinceQuery)
+	blacklistProvinces, err := tx.Query(ctx, blacklistProvincesQuery)
 
-	log.Info().Msg("Finish countries query")
+	log.Info().Msg("Blacklist by Province Chart Data query executed")
 
 	if err != nil {
-		log.Error().Err(err).Msg("Error querying database")
+		log.Error().Err(err).Msg("Error querying Blacklist by Province Chart Data")
 		return emptyLkppChartModel, err
 	}
 
@@ -60,10 +67,10 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 			return emptyLkppChartModel, err
 		}
 
-		lkppChartsResult.BlacklistProvince = append(lkppChartsResult.BlacklistProvince, chartResult)
+		lkppChartsResult.BlacklistProvinces = append(lkppChartsResult.BlacklistProvinces, chartResult)
 	}
 
-	// Get Subject Types Chart Data
+	// Get Ceiling Distribution Chart Data
 	ceilingDistributionQuery := `
 		SELECT
 			a.*
@@ -96,10 +103,10 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 
 	ceilingDistributions, err := tx.Query(ctx, ceilingDistributionQuery)
 
-	log.Info().Msg("Subject Types query executed")
+	log.Info().Msg("Ceiling Distribution Chart Data query executed")
 
 	if err != nil {
-		log.Error().Err(err).Msg("Error querying database")
+		log.Error().Err(err).Msg("Error querying Ceiling Distribution Chart Data")
 		return emptyLkppChartModel, err
 	}
 
@@ -117,8 +124,8 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 		lkppChartsResult.CeilingDistribution = append(lkppChartsResult.CeilingDistribution, chartResult)
 	}
 
-	// Get Case Types Chart Data
-	topTenReporterQuery := `
+	// Get Top Ten Reporters Chart Data
+	topTenReportersQuery := `
 		SELECT
 			c.extra_data -> 0 -> 'data' ->> 'institution_area' AS dimension,
 			count(*) total_report
@@ -132,14 +139,14 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 			2 DESC
 		LIMIT 10;
 	`
-	log.Info().Msg("Executing query: " + topTenReporterQuery)
+	log.Info().Msg("Executing query: " + topTenReportersQuery)
 
-	topTenReporters, err := tx.Query(ctx, topTenReporterQuery)
+	topTenReporters, err := tx.Query(ctx, topTenReportersQuery)
 
-	log.Info().Msg("Case Types query executed")
+	log.Info().Msg("Top Ten Reporters Chart Data query executed")
 
 	if err != nil {
-		log.Error().Err(err).Msg("Error querying database")
+		log.Error().Err(err).Msg("Error querying Top Ten Reporters Chart Data")
 		return emptyLkppChartModel, err
 	}
 
@@ -154,7 +161,116 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 			return emptyLkppChartModel, err
 		}
 
-		lkppChartsResult.TopTenReporter = append(lkppChartsResult.TopTenReporter, chartResult)
+		lkppChartsResult.TopTenReporters = append(lkppChartsResult.TopTenReporters, chartResult)
+	}
+
+	// Get Blacklist Distribution by Scenario Chart Data
+	scenarioDistributionQuery := `
+		SELECT
+			c.extra_data -> 0 -> 'data' ->> 'scenario' AS dimension,
+			round(count(*)::decimal / sum(count(*)) OVER (), 3)*100 AS percentage
+		FROM
+			public.cases c
+		WHERE
+			c.extra_data -> 0 ->> 'type' = 'LKPP'
+		GROUP BY
+			1
+		ORDER BY 
+			2 DESC;
+	`
+	log.Info().Msg("Executing query: " + scenarioDistributionQuery)
+
+	scenarioDistribution, err := tx.Query(ctx, scenarioDistributionQuery)
+
+	log.Info().Msg("Blacklist Distribution by Scenario Chart Data query executed")
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying Blacklist Distribution by Scenario Chart Data")
+		return emptyLkppChartModel, err
+	}
+
+	defer scenarioDistribution.Close()
+
+	for scenarioDistribution.Next() {
+		var chartResult common_models.BaseChartModelFloatValue
+
+		err = scenarioDistribution.Scan(&chartResult.Name, &chartResult.Value)
+
+		if err != nil {
+			return emptyLkppChartModel, err
+		}
+
+		lkppChartsResult.ScenarioDistribution = append(lkppChartsResult.ScenarioDistribution, chartResult)
+	}
+
+	// Get Distribution of Violation Chart Data
+	violationDistributionQuery := `
+		WITH ranked AS (
+			SELECT
+				c.extra_data -> 0 -> 'data' ->> 'rule' AS dimension,
+				count(*) AS total,
+				rank() OVER (ORDER BY count(*) desc) AS rnk
+			FROM
+				public.cases c 
+			WHERE
+				c.extra_data -> 0 ->> 'type' = 'LKPP'
+			GROUP BY
+				1
+		),
+		dimensions AS (
+			SELECT
+				CASE
+					WHEN rnk <= 5 THEN dimension
+					ELSE 'Other'
+				END AS dimension,
+				sum(total) AS total
+			FROM 
+				ranked
+			GROUP BY
+				1
+		),
+		final_data AS (
+			SELECT
+				dimension,
+				round(total::decimal / sum(total) OVER (), 3) AS percentage
+			FROM
+				dimensions
+		)
+		SELECT 
+			dimension,
+			percentage * 100 as percentage
+		FROM 
+			final_data
+		ORDER BY
+			CASE
+				WHEN dimension = 'Other' THEN 99
+				ELSE 1
+			END,
+			percentage desc;
+	`
+	log.Info().Msg("Executing query: " + violationDistributionQuery)
+
+	violationDistribution, err := tx.Query(ctx, violationDistributionQuery)
+
+	log.Info().Msg("Distribution of Violation Chart Data query executed")
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying Distribution of Violation Chart Data")
+		return emptyLkppChartModel, err
+	}
+
+	defer violationDistribution.Close()
+
+	for violationDistribution.Next() {
+		var chartResult common_models.BaseChartModelFloatValue
+
+		err = violationDistribution.Scan(&chartResult.Name, &chartResult.Value)
+
+		if err != nil {
+			return emptyLkppChartModel, err
+		}
+
+		lkppChartsResult.ViolationDistribution = append(lkppChartsResult.ViolationDistribution, chartResult)
 	}
 
 	return lkppChartsResult, nil
