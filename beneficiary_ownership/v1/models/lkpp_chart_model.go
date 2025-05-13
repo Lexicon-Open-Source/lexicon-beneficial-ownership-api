@@ -7,13 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
-	// "gopkg.in/guregu/null.v4"
 )
-
-// type common_models.BaseChartModel struct {
-// 	Name  null.String `json:"name"`
-// 	Value float64     `json:"value"`
-// }
 
 type LkppChartsModel struct {
 	BlacklistProvinces    []common_models.BaseChartModel           `json:"blacklist_province"`
