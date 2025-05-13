@@ -3,20 +3,16 @@ package bo_v1_models
 import (
 	"context"
 
+	common_models "lexicon/bo-api/common/models"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/guregu/null.v4"
 )
 
-type BaseChartModel struct {
-	Name  null.String `json:"name"`
-	Value int64       `json:"value"`
-}
-
 type ChartsModel struct {
-	Countries    []BaseChartModel `json:"countries"`
-	SubjectTypes []BaseChartModel `json:"subjet_types"`
-	CaseTypes    []BaseChartModel `json:"case_types"`
+	Countries    []common_models.BaseChartModel `json:"countries"`
+	SubjectTypes []common_models.BaseChartModel `json:"subjet_types"`
+	CaseTypes    []common_models.BaseChartModel `json:"case_types"`
 }
 
 var emptyChartModel ChartsModel
@@ -49,7 +45,7 @@ func ChartData(ctx context.Context, tx pgx.Tx) (ChartsModel, error) {
 	defer countries.Close()
 
 	for countries.Next() {
-		var chartResult BaseChartModel
+		var chartResult common_models.BaseChartModel
 
 		err = countries.Scan(&chartResult.Name, &chartResult.Value)
 
@@ -88,7 +84,7 @@ func ChartData(ctx context.Context, tx pgx.Tx) (ChartsModel, error) {
 	defer subjectTypes.Close()
 
 	for subjectTypes.Next() {
-		var chartResult BaseChartModel
+		var chartResult common_models.BaseChartModel
 
 		err = subjectTypes.Scan(&chartResult.Name, &chartResult.Value)
 
@@ -127,7 +123,7 @@ func ChartData(ctx context.Context, tx pgx.Tx) (ChartsModel, error) {
 	defer caseTypes.Close()
 
 	for caseTypes.Next() {
-		var chartResult BaseChartModel
+		var chartResult common_models.BaseChartModel
 
 		err = caseTypes.Scan(&chartResult.Name, &chartResult.Value)
 
