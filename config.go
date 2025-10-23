@@ -41,7 +41,7 @@ type pgSqlConfig struct {
 }
 
 func (p pgSqlConfig) ConnStr() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s database=%s sslmode=%s", p.Host, p.Port, p.User, p.Password, p.Database, p.SslMode)
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s database=%s sslmode=%s search_path=bo_v1", p.Host, p.Port, p.User, p.Password, p.Database, p.SslMode)
 }
 
 func defaultPgSql() pgSqlConfig {
