@@ -19,7 +19,7 @@ func main() {
 	// INITIATE CONFIGURATION
 	err := godotenv.Load()
 	if err != nil {
-		log.Error().Err(err).Msg("Error loading .env file")
+		log.Info().Msg(".env file not found, using environment variables from system")
 	}
 	cfg := defaultConfig()
 	cfg.loadFromEnv()
