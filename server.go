@@ -4,6 +4,7 @@ import (
 	bo_v1 "lexicon/bo-api/beneficiary_ownership/v1"
 	middlewares "lexicon/bo-api/middlewares"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -21,12 +22,16 @@ func NewLexiconBOServer(cfg config) (*LexiconBOServer, error) {
 
 	r := chi.NewRouter()
 
+	// Parse CORS allowed origins from config (comma-separated)
+	allowedOrigins := strings.Split(cfg.CorsAllowedOrigins, ",")
+	for i, origin := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(origin)
+	}
+
 	// Basic CORS
 	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://bo.lexicon.id", "https://beneficialowner.lexicon.id", "http://localhost:3000"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-API-KEY", "X-ACCESS-TIME", "X-REQUEST-SIGNATURE", "X-API-USER", "X-REQUEST-IDENTITY"},
 		ExposedHeaders:   []string{"Link"},
@@ -54,6 +59,14 @@ func NewLexiconBOServer(cfg config) (*LexiconBOServer, error) {
 func (s *LexiconBOServer) setupRoute() {
 	r := s.router
 	cfg := s.cfg
+
+	// Health check endpoint (no auth required)
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
+
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(middlewares.AccessTime())
 		r.Use(middlewares.ApiKey(cfg.BackendApiKey, cfg.ServerSalt))

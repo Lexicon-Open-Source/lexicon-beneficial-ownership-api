@@ -88,11 +88,13 @@ func (l *listenConfig) loadFromEnv() {
 }
 
 type config struct {
-	Listen         listenConfig `json:"listen"`
-	PgSql          pgSqlConfig  `json:"pgsql"`
-	BackendApiKey  string       `json:"api_key"`
-	ServerSalt     string       `json:"salt"`
-	ChatbotBaseURL string       `json:"chatbot_base_url"`
+	Listen             listenConfig `json:"listen"`
+	PgSql              pgSqlConfig  `json:"pgsql"`
+	BackendApiKey      string       `json:"api_key"`
+	ServerSalt         string       `json:"salt"`
+	ChatbotBaseURL     string       `json:"chatbot_base_url"`
+	BaseURL            string       `json:"base_url"`
+	CorsAllowedOrigins string       `json:"cors_allowed_origins"`
 }
 
 func (c *config) loadFromEnv() {
@@ -101,14 +103,18 @@ func (c *config) loadFromEnv() {
 	loadEnvString("API_KEY", &c.BackendApiKey)
 	loadEnvString("SALT", &c.ServerSalt)
 	loadEnvString("CHATBOT_BASE_URL", &c.ChatbotBaseURL)
+	loadEnvString("BASE_URL", &c.BaseURL)
+	loadEnvString("CORS_ALLOWED_ORIGINS", &c.CorsAllowedOrigins)
 }
 
 func defaultConfig() config {
 	return config{
-		Listen:         defaultListenConfig(),
-		PgSql:          defaultPgSql(),
-		BackendApiKey:  "", // TODO: Default value ​​need to be defined
-		ServerSalt:     "", // TODO: Default value ​​need to be defined
-		ChatbotBaseURL: "",
+		Listen:             defaultListenConfig(),
+		PgSql:              defaultPgSql(),
+		BackendApiKey:      "", //
+		ServerSalt:         "", //
+		ChatbotBaseURL:     "",
+		BaseURL:            "",
+		CorsAllowedOrigins: "",
 	}
 }

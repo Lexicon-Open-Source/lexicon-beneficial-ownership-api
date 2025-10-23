@@ -1,28 +1,59 @@
-FROM golang:alpine as build-stage
+# Build stage
+FROM golang:1.21-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
+WORKDIR /build
+
+# Copy go mod files and download dependencies (better layer caching)
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+# Copy source code
+COPY . .
+
+# Build arguments for version info
+ARG VERSION=dev
+ARG BUILD_TIME
+ARG GIT_COMMIT
+
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" \
+    -trimpath \
+    -o /app/definition \
+    .
+
+# Production stage - using Alpine for smaller size and better compatibility
+FROM alpine:3.19 AS production
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    && addgroup -g 1000 appuser \
+    && adduser -D -u 1000 -G appuser appuser
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+# Copy the binary from builder
+COPY --from=builder /app/definition .
 
-RUN go mod download
+# Use non-root user for security
+USER appuser:appuser
 
-COPY . ./
+# Expose port (default 8080, can be overridden)
+EXPOSE 8080
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /definition
+# Add metadata labels
+LABEL org.opencontainers.image.title="Lexicon Beneficial Ownership API"
+LABEL org.opencontainers.image.description="Production deployment for Beneficial Ownership API"
+LABEL org.opencontainers.image.vendor="Lexicon Open Source"
 
-# Run the tests in the container
-# FROM build-stage AS run-test-stage
-# RUN go test -v ./...
+# Health check (adjust the endpoint if needed)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-# Deploy the application binary into a lean image
-FROM gcr.io/distroless/base-debian11 AS build-release-stage
-
-WORKDIR /
-
-COPY --from=build-stage /definition /definition
-
-EXPOSE $REGULATORY_LISTEN_PORT
-
-USER nonroot:nonroot
-
-ENTRYPOINT ["/definition"]
+# Set entrypoint
+ENTRYPOINT ["/app/definition"]

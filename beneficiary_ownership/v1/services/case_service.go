@@ -6,6 +6,7 @@ import (
 	"lexicon/bo-api/beneficiary_ownership"
 	models "lexicon/bo-api/beneficiary_ownership/v1/models"
 	bo_v1_repositories "lexicon/bo-api/beneficiary_ownership/v1/repositories"
+	"os"
 
 	"github.com/rs/zerolog/log"
 )
@@ -43,10 +44,13 @@ func GetUrlByCaseNumber(ctx context.Context, caseNumber []string) ([]string, err
 		return nil, err
 	}
 
+	// Get base URL from environment variable
+	baseURL := os.Getenv("BASE_URL")
+
 	var urls []string
 
 	for _, v := range id {
-		url := fmt.Sprintf("https://beneficialowner.lexicon.id/data/%s", v)
+		url := fmt.Sprintf("%s/data/%s", baseURL, v)
 		urls = append(urls, url)
 	}
 

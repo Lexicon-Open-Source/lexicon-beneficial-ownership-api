@@ -1,8 +1,59 @@
-.devcontainer
-_output
-db/*
-.env
+# Git files
 .git
-bin/
+.gitignore
+.gitattributes
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
 README.md
+*.md
+docs/
+
+# Development files
+.devcontainer
 Makefile
+docker-compose*.yml
+
+# Build artifacts
+_output
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Database files
+db/*
+*.sql
+*.db
+
+# Test files
+*_test.go
+
+# CI/CD files
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
