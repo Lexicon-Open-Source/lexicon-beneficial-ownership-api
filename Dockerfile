@@ -22,7 +22,7 @@ ARG GIT_COMMIT
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME} -X main.GitCommit=${GIT_COMMIT}" \
     -trimpath \
-    -o /app/definition \
+    -o /app/bo-api \
     .
 
 # Production stage - using Alpine for smaller size and better compatibility
@@ -38,7 +38,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy the binary from builder
-COPY --from=builder /app/definition .
+COPY --from=builder /app/bo-api .
 
 # Use non-root user for security
 USER appuser:appuser
@@ -56,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Set entrypoint
-ENTRYPOINT ["/app/definition"]
+ENTRYPOINT ["/app/bo-api"]
