@@ -28,15 +28,15 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 		SELECT
 			c.extra_data -> 0 -> 'data' ->> 'province' dimension,
 			count(c.extra_data -> 0 -> 'data' ->> 'province') total
-		FROM 
-			public.cases c
+		FROM
+			cases c
 		WHERE
 			c.extra_data -> 0 ->> 'type' = 'LKPP'
 			AND c.extra_data -> 0 -> 'data' ->> 'province' <> ''
 			AND c.extra_data -> 0 -> 'data' ->> 'province' <> '-'
 		GROUP BY
 			1
-		ORDER BY 
+		ORDER BY
 			2 desc;
 	`
 	log.Info().Msg("Executing query: " + blacklistProvincesQuery)
@@ -78,8 +78,8 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 				WHEN (c.extra_data -> 0 -> 'data' ->> 'ceiling')::bigint > 100000000000 THEN '> 100 B'
 			END AS dimension,
 			COUNT(*) AS value
-			FROM 
-				public.cases c
+			FROM
+				cases c
 			WHERE
 				c.extra_data -> 0 ->> 'type' = 'LKPP'
 			GROUP BY dimension
@@ -124,7 +124,7 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 			c.extra_data -> 0 -> 'data' ->> 'institution_area' AS dimension,
 			count(*) total_report
 		FROM
-			public.cases c
+			cases c
 		WHERE
 			c.extra_data -> 0 ->> 'type' = 'LKPP'
 		GROUP BY
@@ -164,12 +164,12 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 			c.extra_data -> 0 -> 'data' ->> 'scenario' AS dimension,
 			round(count(*)::decimal / sum(count(*)) OVER (), 3)*100 AS percentage
 		FROM
-			public.cases c
+			cases c
 		WHERE
 			c.extra_data -> 0 ->> 'type' = 'LKPP'
 		GROUP BY
 			1
-		ORDER BY 
+		ORDER BY
 			2 DESC;
 	`
 	log.Info().Msg("Executing query: " + scenarioDistributionQuery)
@@ -205,7 +205,7 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 				count(*) AS total,
 				rank() OVER (ORDER BY count(*) desc) AS rnk
 			FROM
-				public.cases c 
+				cases c
 			WHERE
 				c.extra_data -> 0 ->> 'type' = 'LKPP'
 			GROUP BY
@@ -218,7 +218,7 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 					ELSE 'Other'
 				END AS dimension,
 				sum(total) AS total
-			FROM 
+			FROM
 				ranked
 			GROUP BY
 				1
@@ -230,10 +230,10 @@ func LkppChartData(ctx context.Context, tx pgx.Tx) (LkppChartsModel, error) {
 			FROM
 				dimensions
 		)
-		SELECT 
+		SELECT
 			dimension,
 			percentage * 100 as percentage
-		FROM 
+		FROM
 			final_data
 		ORDER BY
 			CASE
